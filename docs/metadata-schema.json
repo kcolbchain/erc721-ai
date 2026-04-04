@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://docs.kcolbchain.com/erc721-ai/metadata-schema.json",
+  "title": "ERC721AI Metadata",
+  "description": "JSON metadata schema for ERC721AI tokenURI – describes an AI model's weights provenance.",
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "model_hash",
+    "storage_cid",
+    "architecture",
+    "training_dataset_hash"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name for the model (e.g. \"ResNet-50 fine-tune v3\")."
+    },
+    "description": {
+      "type": "string",
+      "description": "Free-text description of the model, its purpose, and training details."
+    },
+    "model_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hex digest of the model weights file."
+    },
+    "storage_cid": {
+      "type": "string",
+      "description": "IPFS CID (v0 or v1) where the model weights are stored."
+    },
+    "arweave_txn": {
+      "type": "string",
+      "description": "Arweave transaction ID for permanent storage (optional).",
+      "default": ""
+    },
+    "architecture": {
+      "type": "string",
+      "description": "Model architecture descriptor (e.g. \"ResNet-50\", \"GPT-2-medium\")."
+    },
+    "training_dataset_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hex digest of the training dataset."
+    },
+    "image": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional image/thumbnail representing the model."
+    },
+    "external_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional link to a project page or model card."
+    }
+  },
+  "additionalProperties": false
+}
