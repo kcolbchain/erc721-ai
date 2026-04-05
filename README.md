@@ -20,6 +20,16 @@ cd erc721-ai
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get started. Issues tagged `good-first-issue` are great entry points.
 
+## Attestation Hook (ZK / TEE)
+
+This repo includes a pluggable contract-level attestation hook for verifiable training claims:
+
+- `contracts/interfaces/ITrainingAttestationVerifier.sol`
+- `contracts/mocks/MockTrainingAttestationVerifier.sol`
+- `contracts/ERC721AIAttestationHook.sol`
+
+Design and integration details are documented in `docs/attestation-hook.md`.
+
 ## Links
 
 - **Docs:** https://docs.kcolbchain.com/erc721-ai/
