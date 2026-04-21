@@ -103,7 +103,7 @@ def upload_to_arweave(file_path: str, wallet_path: Optional[str] = None) -> str:
     Requires an Arweave wallet (keyfile JSON).
     """
     try:
-        from arweave import Wallet, Transaction
+        from arweave.arweave_lib import Wallet, Transaction
     except ImportError:
         logger.error("arweave not installed. Run: pip install arweave")
         sys.exit(1)
