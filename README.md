@@ -41,6 +41,10 @@ This repo also includes a pluggable contract-level attestation hook for verifiab
 
 Design and integration details are documented in `docs/attestation-hook.md`.
 
+## TypeScript SDK
+
+A viem-based TypeScript SDK for the standard lives in [`sdk/typescript/`](./sdk/typescript/) — it wraps `ERC721AI`, `ERC721AIx402Metering`, and `ERC721AIAttestationHook` behind three modules (`model`, `metering`, `attestation`) so consumers can mint a tokenised model, set an inference price, pay per call, and withdraw revenue in roughly five lines of code. See [`sdk/typescript/README.md`](./sdk/typescript/README.md) for the quickstart.
+
 ## Links
 
 - **Docs:** https://docs.kcolbchain.com/erc721-ai/
