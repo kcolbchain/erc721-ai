@@ -8,14 +8,14 @@ This script combines:
 3. Minting the token (requires contract interaction)
 
 Usage:
-    python scripts/mint_oneflow.py \
+    python scripts/mint_token.py \
         --weights ./model.weights \
         --contract 0x1234... \
         --private-key 0xabcd... \
         --arweave
 
 Requirements:
-    pip install web3 arweave eth_account
+    pip install requests web3 eth_account
 """
 
 import argparse
@@ -23,108 +23,110 @@ import json
 import sys
 from pathlib import Path
 
-from upload_weights import upload_and_mint
+try:
+    from web3 import Web3
+    from eth_account import Account
+    HAS_WEB3 = True
+except ImportError:
+    HAS_WEB3 = False
+
+# Import upload function from upload_weights
+sys.path.insert(0, str(Path(__file__).parent))
+from upload_weights import upload_to_ipfs, upload_to_arweave, generate_metadata
 
 
-def mint_token(
-    contract_address: str,
-    token_uri: str,
-    private_key: str,
-    rpc_url: str = "http://localhost:8545"
-) -> str:
-    """Mint ERC721AI token with the given URI."""
-    try:
-        from web3 import Web3
-        from eth_account import Account
-    except ImportError:
-        print("❌ web3 or eth_account not installed")
-        print("   Run: pip install web3 eth_account")
+ERC721AI_ABI = [
+    {
+        "inputs": [
+            {"internalType": "address", "name": "to", "type": "address"},
+            {"internalType": "string", "name": "tokenURI", "type": "string"},
+        ],
+        "name": "safeMint",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    }
+]
+
+
+def mint_token(contract_address, token_uri, private_key, rpc_url="http://127.0.0.1:8545"):
+    """Mint an ERC721AI token on-chain."""
+    if not HAS_WEB3:
+        print("Error: 'web3' and 'eth_account' packages required.")
+        print("Install with: pip install web3 eth_account")
         sys.exit(1)
-    
+
     w3 = Web3(Web3.HTTPProvider(rpc_url))
-    if not w3.is_connected():
-        print(f"❌ Cannot connect to RPC: {rpc_url}")
-        sys.exit(1)
-    
     account = Account.from_key(private_key)
-    print(f"   Account: {account.address}")
-    
-    # ERC721AI contract ABI (minimal for minting)
-    abi = [
-        {
-            "inputs": [
-                {"name": "to", "type": "address"},
-                {"name": "tokenURI", "type": "string"}
-            ],
-            "name": "mint",
-            "outputs": [{"name": "tokenId", "type": "uint256"}],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        }
-    ]
-    
-    contract = w3.eth.contract(address=contract_address, abi=abi)
-    
-    nonce = w3.eth.get_transaction_count(account.address)
-    tx = contract.functions.mint(account.address, token_uri).build_transaction({
-        'from': account.address,
-        'nonce': nonce,
-        'gas': 200000,
-        'gasPrice': w3.eth.gas_price
+
+    contract = w3.eth.contract(address=Web3.to_checksum_address(contract_address), abi=ERC721AI_ABI)
+
+    tx = contract.functions.safeMint(account.address, token_uri).build_transaction({
+        "from": account.address,
+        "nonce": w3.eth.get_transaction_count(account.address),
+        "gas": 200000,
+        "gasPrice": w3.eth.gas_price,
     })
-    
-    signed_tx = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+    signed = account.sign_transaction(tx)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    
-    token_id = receipt.logs[0]['topics'][3] if receipt.logs else "unknown"
+
+    token_id = None
+    for log in receipt.logs:
+        if log.topics and log.topics[0].hex().startswith("0xddf252ad"):
+            token_id = int(log.topics[3].hex(), 16)
+
+    print(f"[Mint] TX: {tx_hash.hex()}, Token ID: {token_id}")
     return token_id
 
 
 def main():
     parser = argparse.ArgumentParser(description="Upload weights and mint ERC721AI token")
-    parser.add_argument("--weights", required=True, help="Path to model weights file")
-    parser.add_argument("--storage", choices=["ipfs", "arweave"], default="ipfs")
+    parser.add_argument("--weights", required=True, help="Path to weights file")
     parser.add_argument("--contract", required=True, help="ERC721AI contract address")
-    parser.add_argument("--private-key", required=True, help="Wallet private key")
-    parser.add_argument("--rpc-url", default="http://localhost:8545", help="RPC URL")
-    parser.add_argument("--arweave-wallet", help="Arweave wallet path")
-    parser.add_argument("--architecture", default="Transformer-based model")
-    parser.add_argument("--dataset", help="Training dataset path")
-    parser.add_argument("--model-name", help="Model name")
-    parser.add_argument("--output-dir", default="./output", help="Output directory")
-    
+    parser.add_argument("--private-key", required=True, help="Deployer private key")
+    parser.add_argument("--rpc-url", default="http://127.0.0.1:8545", help="RPC URL")
+    parser.add_argument("--ipfs", action="store_true", help="Upload to IPFS")
+    parser.add_argument("--arweave", action="store_true", help="Upload to Arweave")
+    parser.add_argument("--arweave-wallet", help="Arweave wallet keyfile")
+    parser.add_argument("--name", default="ERC721AI Token", help="Token name")
+    parser.add_argument("--description", default="AI model weights", help="Token description")
+    parser.add_argument("--metadata-host", choices=["ipfs", "arweave", "local"], default="local",
+                        help="Where to host metadata JSON")
+
     args = parser.parse_args()
-    
-    os.makedirs(args.output_dir, exist_ok=True)
-    metadata_path = f"{args.output_dir}/metadata.json"
-    
-    print("🚀 ERC721AI One-Flow: Upload + Mint")
-    print("=" * 50)
-    
-    print("\n📤 Step 1: Uploading weights...")
-    result = upload_and_mint(
-        weights_path=args.weights,
-        storage=args.storage,
-        architecture=args.architecture,
-        dataset_path=args.dataset,
-        arweave_wallet=args.arweave_wallet,
-        output=metadata_path
+
+    # Step 1: Upload weights
+    ipfs_cid = upload_to_ipfs(args.weights) if args.ipfs else None
+    arweave_tx = upload_to_arweave(args.weights, wallet_keyfile=args.arweave_wallet) if args.arweave else None
+
+    # Step 2: Generate metadata
+    metadata = generate_metadata(
+        name=args.name,
+        description=args.description,
+        ipfs_cid=ipfs_cid,
+        arweave_tx=arweave_tx,
     )
-    
-    print("\n⛓️  Step 2: Minting token...")
-    token_id = mint_token(
-        contract_address=args.contract,
-        token_uri=f"ipfs://{result['storage_cid']}",
-        private_key=args.private_key,
-        rpc_url=args.rpc_url
-    )
-    
-    print(f"\n✅ Token minted!")
-    print(f"   Token ID: {token_id}")
-    print(f"   Metadata: {metadata_path}")
+
+    # Step 3: Upload metadata and get tokenURI
+    metadata_str = json.dumps(metadata)
+
+    if args.metadata_host == "ipfs" and ipfs_cid:
+        import requests
+        url = "http://127.0.0.1:5001/api/v0/add"
+        r = requests.post(url, files={"file": ("metadata.json", metadata_str)}, timeout=60)
+        meta_cid = r.json()["Hash"]
+        token_uri = f"ipfs://{meta_cid}"
+    elif args.metadata_host == "arweave" and arweave_tx:
+        token_uri = f"ar://{arweave_tx}"
+    else:
+        token_uri = f"data:application/json;base64," + __import__("base64").b64encode(metadata_str.encode()).decode()
+
+    # Step 4: Mint token
+    token_id = mint_token(args.contract, token_uri, args.private_key, args.rpc_url)
+    print(f"\n✅ Token minted! ID: {token_id}, URI: {token_uri[:80]}...")
 
 
 if __name__ == "__main__":
-    import os
     main()
