@@ -6,6 +6,8 @@
 
 ## Status
 
+[![CI](https://github.com/kcolbchain/erc721-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kcolbchain/erc721-ai/actions/workflows/ci.yml)
+
 Early development. Looking for contributors! See [open issues](https://github.com/kcolbchain/erc721-ai/issues) for ways to help.
 
 ## Quick Start
