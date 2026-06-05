@@ -48,7 +48,7 @@ contract ERC721AIZkVerifierStub {
         uint256[] calldata publicInputs,
         address verifierContract
     ) external {
-        (bytes32 modelId, bytes32 onChainArtifactHash,,,,,,,,,) = erc721ai.modelAsset(tokenId);
+        (, bytes32 onChainArtifactHash,,,,,,,,) = erc721ai.modelAsset(tokenId);
         if (onChainArtifactHash == bytes32(0)) revert TokenNotFound();
 
         bool verified = IZkVerifier(verifierContract).verifyProof(proof, publicInputs);
