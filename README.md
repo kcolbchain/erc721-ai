@@ -10,10 +10,47 @@ Early development. Looking for contributors! See [open issues](https://github.co
 
 ## Quick Start
 
+### Prerequisites
+
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) (forge, cast, anvil)
+- [Node.js](https://nodejs.org/) >= 18 (for the TypeScript SDK)
+
+### Solidity Contracts
+
 ```bash
 git clone https://github.com/kcolbchain/erc721-ai.git
 cd erc721-ai
-# Setup instructions coming soon
+
+# Install dependencies
+forge install
+
+# Build contracts
+forge build
+
+# Run Solidity tests
+forge test
+```
+
+If you don't have Foundry installed:
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+### TypeScript SDK
+
+```bash
+cd sdk/typescript
+
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Build
+npm run build
 ```
 
 ## Contributing
