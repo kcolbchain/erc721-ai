@@ -18,6 +18,9 @@ jobs:
         with:
           version: stable
 
+      - name: Install contract dependencies
+        run: forge install --no-git foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts
+
       - name: Build contracts
         run: forge build
 
