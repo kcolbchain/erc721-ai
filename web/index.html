@@ -1,392 +1,817 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>erc721-ai -- tokenized AI model weights</title>
-<meta name="description" content="ERC-721 token standard for tokenized fine-tuned AI model weights. Each NFT represents a model with metadata, provenance, and x402 inference metering. By kcolbchain." />
-<style>
-  :root {
-    --bg: #0b0d10; --panel: #13161b; --panel-2: #0f1216; --border: #23272f;
-    --fg: #e7e9ee; --muted: #8a93a3;
-    --accent: #a78bfa; --ok: #34d399; --warn: #fbbf24; --hot: #f87171; --info: #7dd3fc;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERC-721 AI Marketplace</title>
+  <meta name="description" content="Browse, mint, and inspect tokenized AI model NFTs on Base Sepolia." />
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --panel: #12161d;
+      --panel-2: #0f1319;
+      --border: #26303d;
+      --fg: #f4f7fb;
+      --muted: #9aa6b8;
+      --accent: #8ee3c8;
+      --accent-2: #9db8ff;
+      --warn: #f9c74f;
+      --bad: #ff7a90;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
 
-  header { padding: 22px 32px; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:12px; }
-  header h1 { margin:0; font-size: 20px; }
-  header h1 .dot { color: var(--accent); }
-  header p { margin:0; color: var(--muted); font-size: 13px; }
-
-  main { padding: 24px 32px 80px 32px; max-width: 1280px; margin: 0 auto; }
-  h2 { font-size: 16px; margin: 28px 0 10px 0; }
-  h2:first-of-type { margin-top: 0; }
-  h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px 0; }
-
-  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
-
-  /* Model Gallery */
-  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-bottom: 20px; }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.15s; }
-  .card:hover { border-color: var(--accent); }
-  .card .model-name { font-size: 15px; font-weight: 600; color: var(--fg); margin: 0; }
-  .card .arch { font-family: var(--mono); font-size: 11px; color: var(--accent); }
-  .card .meta-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-  .card .meta-row .val { color: var(--fg); font-family: var(--mono); font-size: 11px; }
-  .card .badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-  .tag { font-family: var(--mono); font-size: 10.5px; padding: 2px 8px; border-radius: 99px; background: #1f232b; color: var(--muted); }
-  .tag.x402 { background: #1e1633; color: var(--accent); }
-  .tag.license { background: #0e2a1e; color: var(--ok); }
-  .tag.metric { background: #2a1f0e; color: var(--warn); }
-  .card .owner { font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin-top: auto; padding-top: 4px; border-top: 1px solid var(--border); }
-
-  /* Schema panel */
-  pre { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.55; margin: 0; }
-  .kw  { color: #c4b5fd; }
-  .str { color: #86efac; }
-  .num { color: var(--warn); }
-  .prop { color: var(--accent); }
-  .com { color: var(--muted); font-style: italic; }
-
-  /* Metering panel */
-  .meter-grid { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
-  @media (max-width: 800px) { .meter-grid { grid-template-columns: 1fr; } }
-  .controls { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
-  .field { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; gap: 10px; }
-  .field label { color: var(--muted); font-size: 12px; flex: 1; }
-  .field select, .field input { background: var(--panel-2); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 12px; }
-  .field select { width: 180px; }
-  .field input[type=number] { width: 100px; font-family: var(--mono); text-align: right; }
-  .cost-display { margin-top: 12px; padding: 12px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; text-align: center; }
-  .cost-display .amount { font-size: 28px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
-  .cost-display .unit { font-size: 13px; color: var(--muted); }
-  .flow-diagram { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-  svg.flow { display: block; width: 100%; height: 260px; }
-  svg.flow .lane { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 3; }
-  svg.flow .actor { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; rx: 6; }
-  svg.flow .actor-label { fill: var(--fg); font-size: 12px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-  svg.flow .msg { stroke: var(--accent); stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
-  svg.flow .msg-label { fill: var(--muted); font-size: 10px; font-family: var(--mono); }
-
-  /* Provenance */
-  .prov-select { margin-bottom: 12px; }
-  .prov-select select { background: var(--panel-2); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 12px; }
-  .timeline { position: relative; padding: 8px 0 8px 28px; }
-  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--border); border-radius: 1px; }
-  .tl-event { position: relative; margin-bottom: 16px; }
-  .tl-event::before { content: ''; position: absolute; left: -22px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
-  .tl-event.mint::before { background: var(--ok); }
-  .tl-event.transfer::before { background: var(--warn); }
-  .tl-event.inference::before { background: var(--info); }
-  .tl-event .tl-date { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-  .tl-event .tl-title { font-size: 13px; font-weight: 600; margin: 2px 0; }
-  .tl-event .tl-detail { font-size: 12px; color: var(--muted); }
-
-  /* Links */
-  .links-row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .link-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; transition: border-color 0.15s; }
-  .link-chip:hover { border-color: var(--accent); text-decoration: none; }
-  .link-chip .icon { font-size: 16px; }
-
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
-</style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button, input, textarea, select { font: inherit; }
+    button {
+      align-items: center;
+      background: var(--accent);
+      border: 0;
+      border-radius: 8px;
+      color: #05110e;
+      cursor: pointer;
+      display: inline-flex;
+      font-weight: 750;
+      gap: 8px;
+      justify-content: center;
+      min-height: 38px;
+      padding: 9px 13px;
+    }
+    button.secondary {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--fg);
+    }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    header {
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      padding: 20px 28px;
+    }
+    header h1 { font-size: 20px; margin: 0; }
+    header p { color: var(--muted); margin: 2px 0 0; }
+    main { margin: 0 auto; max-width: 1320px; padding: 24px 28px 72px; }
+    h2 { font-size: 16px; margin: 0 0 12px; }
+    h3 { font-size: 14px; margin: 0; }
+    .wallet { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+    .pill {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      font: 12px/1 var(--mono);
+      padding: 8px 10px;
+      white-space: nowrap;
+    }
+    .pill.good { border-color: rgba(142, 227, 200, .35); color: var(--accent); }
+    .pill.warn { border-color: rgba(249, 199, 79, .35); color: var(--warn); }
+    .grid { display: grid; gap: 16px; }
+    .top-grid { grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr); }
+    .bottom-grid { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); margin-top: 18px; }
+    @media (max-width: 980px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .wallet { justify-content: flex-start; }
+      .top-grid, .bottom-grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .toolbar { align-items: center; display: flex; gap: 10px; justify-content: space-between; margin-bottom: 12px; }
+    .toolbar input {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--fg);
+      max-width: 300px;
+      padding: 9px 10px;
+      width: 100%;
+    }
+    .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); }
+    .card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      min-height: 220px;
+      padding: 14px;
+    }
+    .card:hover, .card.active { border-color: var(--accent); }
+    .card-title { font-size: 15px; font-weight: 750; line-height: 1.25; }
+    .muted { color: var(--muted); }
+    .mono { font-family: var(--mono); }
+    .row { display: flex; gap: 8px; justify-content: space-between; }
+    .small { font-size: 12px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      background: #1d2530;
+      border-radius: 999px;
+      color: var(--muted);
+      font: 11px/1 var(--mono);
+      padding: 5px 8px;
+    }
+    .tag.ok { background: rgba(142, 227, 200, .1); color: var(--accent); }
+    .tag.info { background: rgba(157, 184, 255, .11); color: var(--accent-2); }
+    .detail-head { align-items: flex-start; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 14px; }
+    .kv { display: grid; gap: 8px 12px; grid-template-columns: 150px 1fr; }
+    .kv .k { color: var(--muted); }
+    .kv .v { color: var(--fg); font-family: var(--mono); overflow-wrap: anywhere; }
+    .form-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+    .wide { grid-column: 1 / -1; }
+    @media (max-width: 660px) { .form-grid { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
+    label { color: var(--muted); display: block; font-size: 12px; margin-bottom: 4px; }
+    input, textarea, select {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--fg);
+      padding: 9px 10px;
+      width: 100%;
+    }
+    textarea { min-height: 74px; resize: vertical; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .notice {
+      background: rgba(157, 184, 255, .06);
+      border: 1px solid rgba(157, 184, 255, .25);
+      border-radius: 8px;
+      color: #cfdbff;
+      font-size: 12px;
+      margin-top: 12px;
+      padding: 10px 12px;
+    }
+    .notice.error { background: rgba(255, 122, 144, .08); border-color: rgba(255, 122, 144, .32); color: #ffc7d0; }
+    .timeline { border-left: 2px solid var(--border); margin-top: 12px; padding-left: 16px; }
+    .event { margin: 0 0 14px; position: relative; }
+    .event:before {
+      background: var(--accent);
+      border: 2px solid var(--panel);
+      border-radius: 50%;
+      content: "";
+      height: 9px;
+      left: -22px;
+      position: absolute;
+      top: 4px;
+      width: 9px;
+    }
+    .event strong { display: block; }
+    pre {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 0;
+      overflow: auto;
+      padding: 12px;
+      white-space: pre-wrap;
+    }
+    footer { border-top: 1px solid var(--border); color: var(--muted); padding: 16px 28px; }
+  </style>
 </head>
 <body>
-
-<header>
-  <h1>erc721<span class="dot">-</span>ai</h1>
-  <p>ERC-721 token standard for tokenized fine-tuned AI model weights</p>
-</header>
-
-<main>
-
-<!-- ── 1. Model Gallery ───────────────────────────────────── -->
-<h2>Model Gallery</h2>
-<div class="gallery" id="gallery"></div>
-
-<!-- ── 2 & 3: Schema + Metering side-by-side ──────────────── -->
-<div class="two-col">
-
-  <!-- Token Standard -->
-  <div>
-    <h2>Token Standard</h2>
-    <div class="panel">
-      <h3>ERC-721 AI Metadata Schema</h3>
-      <pre id="schema-pre"></pre>
+  <header>
+    <div>
+      <h1>ERC-721 AI Marketplace</h1>
+      <p>Browse and mint tokenized model-weight NFTs on Base Sepolia.</p>
     </div>
-  </div>
+    <div class="wallet">
+      <span id="network-pill" class="pill warn">Base Sepolia not connected</span>
+      <span id="account-pill" class="pill">No wallet</span>
+      <button class="secondary" id="switch-network">Switch network</button>
+      <button id="connect-wallet">Connect wallet</button>
+    </div>
+  </header>
 
-  <!-- x402 Metering -->
-  <div>
-    <h2>x402 Metering</h2>
-    <div class="meter-grid">
-      <div class="controls">
-        <h3>Inference Calculator</h3>
-        <div class="field">
-          <label>Model</label>
-          <select id="meter-model"></select>
+  <main>
+    <section class="grid top-grid">
+      <div class="panel">
+        <div class="toolbar">
+          <h2>Contract Source</h2>
+          <button class="secondary" id="use-demo">Use demo data</button>
         </div>
-        <div class="field">
-          <label>Inference count</label>
-          <input type="number" id="meter-count" value="10" min="1" max="10000" />
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="wide">
+            <label for="contract-address">ERC721AI contract address</label>
+            <input id="contract-address" placeholder="0x..." />
+          </div>
+          <div class="wide actions" style="margin-top:0">
+            <button class="secondary" id="load-chain-models">Load on-chain models</button>
+          </div>
         </div>
-        <div class="cost-display">
-          <div class="amount" id="meter-total">$0.50</div>
-          <div class="unit">USDC total</div>
+        <div class="toolbar">
+          <h2>Minted Models</h2>
+          <input id="search" type="search" placeholder="Search models, licenses, endpoints" />
+        </div>
+        <div id="cards" class="cards"></div>
+      </div>
+
+      <aside class="panel">
+        <div class="detail-head">
+          <div>
+            <h2 id="detail-title">Model detail</h2>
+            <div id="detail-subtitle" class="muted small"></div>
+          </div>
+          <span id="detail-token" class="pill good"></span>
+        </div>
+        <div id="detail-kv" class="kv"></div>
+        <div class="actions">
+          <button class="secondary" id="copy-metadata">Copy metadata</button>
+          <a id="endpoint-link" href="#" target="_blank"><button class="secondary">Open endpoint</button></a>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid bottom-grid">
+      <div class="panel">
+        <h2>Mint a Model NFT</h2>
+        <form id="mint-form">
+          <div class="form-grid">
+            <div>
+              <label for="model-name">Model name</label>
+              <input id="model-name" required value="Phi-3 Mini - Support Triage Adapter" />
+            </div>
+            <div>
+              <label for="architecture">Base model / architecture</label>
+              <input id="architecture" required value="Phi-3 Mini + LoRA" />
+            </div>
+            <div>
+              <label for="weights-cid">Weights CID</label>
+              <input id="weights-cid" required value="bafybeigdyrztxai-support-triage" />
+            </div>
+            <div>
+              <label for="license">License</label>
+              <input id="license" required value="Apache-2.0" />
+            </div>
+            <div>
+              <label for="royalty">Creator royalty bps</label>
+              <input id="royalty" type="number" min="0" max="10000" required value="500" />
+            </div>
+            <div>
+              <label for="price">USDC per inference</label>
+              <input id="price" type="number" min="0" step="0.001" required value="0.025" />
+            </div>
+            <div class="wide">
+              <label for="metadata-file">Upload metadata JSON</label>
+              <input id="metadata-file" type="file" accept="application/json,.json" />
+            </div>
+            <div class="wide">
+              <label for="endpoint">Inference endpoint</label>
+              <input id="endpoint" type="url" required value="https://api.example.com/erc721-ai/support-triage/infer" />
+            </div>
+            <div class="wide">
+              <label for="description">Metadata description</label>
+              <textarea id="description">Fine-tuned support triage adapter with provenance, royalty metadata, and x402-ready inference pricing.</textarea>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit">Mint / preview model</button>
+            <button class="secondary" type="button" id="reset-demo">Reset demo data</button>
+          </div>
+        </form>
+        <div id="mint-status" class="notice">
+          Enter a deployed <span class="mono">ERC721AI</span> contract address to load and mint real Base Sepolia models. Without one, the app creates local preview models so reviewers can test the full flow.
         </div>
       </div>
-      <div class="flow-diagram">
-        <svg class="flow" viewBox="0 0 460 260" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" fill="var(--accent)" />
-            </marker>
-          </defs>
-          <!-- Actors -->
-          <rect class="actor" x="20" y="20" width="90" height="32" />
-          <text class="actor-label" x="65" y="41" text-anchor="middle">AI Agent</text>
-          <rect class="actor" x="185" y="20" width="90" height="32" />
-          <text class="actor-label" x="230" y="41" text-anchor="middle">Model API</text>
-          <rect class="actor" x="350" y="20" width="90" height="32" />
-          <text class="actor-label" x="395" y="41" text-anchor="middle">x402 Gate</text>
 
-          <!-- Lifelines -->
-          <line class="lane" x1="65" y1="52" x2="65" y2="245" />
-          <line class="lane" x1="230" y1="52" x2="230" y2="245" />
-          <line class="lane" x1="395" y1="52" x2="395" y2="245" />
-
-          <!-- Step 1: Request -->
-          <line class="msg" x1="68" y1="80" x2="227" y2="80" />
-          <text class="msg-label" x="148" y="74">POST /infer</text>
-
-          <!-- Step 2: 402 -->
-          <line class="msg" x1="227" y1="110" x2="68" y2="110" style="stroke:var(--warn)" />
-          <text class="msg-label" x="148" y="104" style="fill:var(--warn)">HTTP 402</text>
-
-          <!-- Step 3: Pay -->
-          <line class="msg" x1="68" y1="145" x2="392" y2="145" />
-          <text class="msg-label" x="230" y="139">USDC payment</text>
-
-          <!-- Step 4: Receipt -->
-          <line class="msg" x1="392" y1="175" x2="231" y2="175" style="stroke:var(--ok)" />
-          <text class="msg-label" x="312" y="169" style="fill:var(--ok)">receipt</text>
-
-          <!-- Step 5: Result -->
-          <line class="msg" x1="227" y1="210" x2="68" y2="210" style="stroke:var(--ok)" />
-          <text class="msg-label" x="148" y="204" style="fill:var(--ok)">inference result</text>
-
-          <!-- Step 6: On-chain log -->
-          <line class="msg" x1="233" y1="238" x2="392" y2="238" style="stroke:var(--muted);stroke-dasharray:4 3" />
-          <text class="msg-label" x="312" y="232">log inference #</text>
-        </svg>
+      <div class="panel">
+        <h2>Provenance, Attestation, and x402</h2>
+        <div id="timeline" class="timeline"></div>
+        <h2 style="margin-top:18px">Submission Metadata</h2>
+        <pre id="metadata-preview"></pre>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-</div>
+  <footer>
+    Static deployment ready: serve the <span class="mono">web/</span> directory on Vercel or Netlify. Source: <a href="https://github.com/kcolbchain/erc721-ai">kcolbchain/erc721-ai</a>.
+  </footer>
 
-<!-- ── 4. Provenance Chain ────────────────────────────────── -->
-<h2>Provenance Chain</h2>
-<div class="panel">
-  <div class="prov-select">
-    <label style="color:var(--muted);font-size:12px;margin-right:8px">Select model:</label>
-    <select id="prov-model"></select>
-  </div>
-  <div class="timeline" id="timeline"></div>
-</div>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script>
+    window.ethers = window.ethers || {
+      id(value) {
+        const input = String(value);
+        let hash = 2166136261;
+        for (let i = 0; i < input.length; i += 1) {
+          hash ^= input.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return "0x" + (hash >>> 0).toString(16).padStart(8, "0").repeat(8);
+      },
+      ZeroHash: "0x" + "0".repeat(64)
+    };
+  </script>
+  <script>
+    const BASE_SEPOLIA = {
+      chainIdHex: "0x14a34",
+      chainId: 84532,
+      chainName: "Base Sepolia",
+      nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+      rpcUrls: ["https://sepolia.base.org"],
+      blockExplorerUrls: ["https://sepolia.basescan.org"]
+    };
 
-<!-- ── 5. Links ───────────────────────────────────────────── -->
-<h2>Links</h2>
-<div class="links-row">
-  <a class="link-chip" href="https://github.com/kcolbchain/erc721-ai" target="_blank"><span class="icon">&#128279;</span> Source Repo</a>
-  <a class="link-chip" href="https://github.com/kcolbchain/erc721-ai#readme" target="_blank"><span class="icon">&#128214;</span> Docs</a>
-  <a class="link-chip" href="https://github.com/kcolbchain/erc721-ai/issues/9" target="_blank"><span class="icon">&#128176;</span> Issue #9 -- x402 Metering</a>
-  <a class="link-chip" href="https://kcolbchain.com/switchboard/" target="_blank"><span class="icon">&#9879;</span> Switchboard Dashboard</a>
-</div>
+    // Optional default live deployment. Reviewers can also paste an address in the UI.
+    const DEFAULT_CONTRACT_ADDRESS = "";
+    const ERC721_AI_ABI = [
+      "function totalSupply() view returns (uint256)",
+      "function ownerOf(uint256 tokenId) view returns (address)",
+      "function modelAsset(uint256 tokenId) view returns (bytes32 modelId, bytes32 artifactHash, bytes32 baseModel, string weightsCID, string architecture, string license, string inferenceEndpoint, uint16 creatorRoyaltyBps, uint64 createdAt, address creator)",
+      "function mintModel(address to, bytes32 modelId, bytes32 artifactHash, bytes32 baseModel, string weightsCID, string architecture, string license, string inferenceEndpoint, uint16 creatorRoyaltyBps) returns (uint256)",
+      "event ModelMinted(uint256 indexed tokenId, bytes32 indexed modelId, bytes32 indexed artifactHash, address creator, string weightsCID)"
+    ];
 
-</main>
-
-<script>
-// ── Data ──────────────────────────────────────────────────
-const MODELS = [
-  {
-    id: 1, name: "SDXL LoRA -- Cyberpunk Portraits",
-    arch: "Stable Diffusion XL + LoRA", data: "80K curated cyberpunk images",
-    license: "Apache-2.0", metric: "FID 12.4", metricType: "FID",
-    mintCost: "0.08 ETH", price: 0.05,
-    owner: "0x7a3B...f91E",
-    provenance: [
-      { type: "mint", date: "2026-01-15", title: "Minted", detail: "Token #1 minted by 0x7a3B...f91E on Base" },
-      { type: "inference", date: "2026-02-03", title: "Inference #1-50", detail: "50 inferences, 2.50 USDC earned" },
-      { type: "transfer", date: "2026-03-01", title: "Transferred", detail: "Sold to 0xB4c2...a3D7 for 0.12 ETH" },
-      { type: "inference", date: "2026-04-10", title: "Inference #51-312", detail: "262 inferences, 13.10 USDC earned" }
-    ]
-  },
-  {
-    id: 2, name: "Llama-3 8B -- Legal QA",
-    arch: "Meta Llama-3 8B + QLoRA", data: "500K legal Q&A pairs (CaseText)",
-    license: "Llama-3 Community", metric: "PPL 4.2", metricType: "Perplexity",
-    mintCost: "0.12 ETH", price: 0.02,
-    owner: "0xB4c2...a3D7",
-    provenance: [
-      { type: "mint", date: "2026-02-10", title: "Minted", detail: "Token #2 minted by 0xB4c2...a3D7 on Base" },
-      { type: "inference", date: "2026-02-20", title: "Inference #1-1204", detail: "1,204 inferences, 24.08 USDC earned" },
-      { type: "inference", date: "2026-04-12", title: "Inference #1205-3891", detail: "2,687 inferences, 53.74 USDC earned" }
-    ]
-  },
-  {
-    id: 3, name: "Whisper Large -- Mandarin Medical",
-    arch: "OpenAI Whisper Large v3 fine-tune", data: "120hr Mandarin clinical transcripts",
-    license: "MIT", metric: "WER 3.1%", metricType: "WER",
-    mintCost: "0.06 ETH", price: 0.01,
-    owner: "0x91eF...2c44",
-    provenance: [
-      { type: "mint", date: "2026-01-28", title: "Minted", detail: "Token #3 minted by 0x91eF...2c44 on Base" },
-      { type: "transfer", date: "2026-02-15", title: "Transferred", detail: "Licensed to 0xD8a1...7fB3 (non-exclusive)" },
-      { type: "inference", date: "2026-03-20", title: "Inference #1-8420", detail: "8,420 inferences, 84.20 USDC earned" }
-    ]
-  },
-  {
-    id: 4, name: "Stable Audio -- Lo-fi Beats",
-    arch: "Stability Stable Audio 2.0 fine-tune", data: "40K lo-fi stems (CC0 licensed)",
-    license: "CC-BY-4.0", metric: "FAD 1.8", metricType: "FAD",
-    mintCost: "0.10 ETH", price: 0.08,
-    owner: "0xD8a1...7fB3",
-    provenance: [
-      { type: "mint", date: "2026-03-05", title: "Minted", detail: "Token #4 minted by 0xD8a1...7fB3 on Base" },
-      { type: "inference", date: "2026-03-18", title: "Inference #1-90", detail: "90 inferences, 7.20 USDC earned" },
-      { type: "inference", date: "2026-04-08", title: "Inference #91-245", detail: "155 inferences, 12.40 USDC earned" }
-    ]
-  },
-  {
-    id: 5, name: "CodeLlama 13B -- Solidity Adapter",
-    arch: "Meta CodeLlama 13B + LoRA", data: "200K verified Solidity contracts",
-    license: "Llama-2 Community", metric: "pass@1 68.3%", metricType: "pass@1",
-    mintCost: "0.15 ETH", price: 0.03,
-    owner: "0x7a3B...f91E",
-    provenance: [
-      { type: "mint", date: "2026-03-22", title: "Minted", detail: "Token #5 minted by 0x7a3B...f91E on Base" },
-      { type: "inference", date: "2026-04-01", title: "Inference #1-670", detail: "670 inferences, 20.10 USDC earned" },
-      { type: "transfer", date: "2026-04-11", title: "Transferred", detail: "Sold to 0x91eF...2c44 for 0.22 ETH" },
-      { type: "inference", date: "2026-04-13", title: "Inference #671-702", detail: "32 inferences, 0.96 USDC earned" }
-    ]
-  }
-];
-
-// ── Gallery ───────────────────────────────────────────────
-const gallery = document.getElementById("gallery");
-MODELS.forEach(m => {
-  const card = document.createElement("div");
-  card.className = "card";
-  card.innerHTML = `
-    <div class="model-name">${m.name}</div>
-    <div class="arch">${m.arch}</div>
-    <div class="meta-row"><span>Training data</span><span class="val">${m.data.length > 30 ? m.data.slice(0,28) + '...' : m.data}</span></div>
-    <div class="meta-row"><span>Mint cost</span><span class="val">${m.mintCost}</span></div>
-    <div class="meta-row"><span>Token ID</span><span class="val">#${m.id}</span></div>
-    <div class="badge-row">
-      <span class="tag license">${m.license}</span>
-      <span class="tag metric">${m.metric}</span>
-      <span class="tag x402">x402 $${m.price.toFixed(2)}/inference</span>
-    </div>
-    <div class="owner">${m.owner}</div>
-  `;
-  card.title = m.data;
-  gallery.appendChild(card);
-});
-
-// ── Schema ────────────────────────────────────────────────
-document.getElementById("schema-pre").innerHTML = highlight(JSON.stringify({
-  "$schema": "https://erc721-ai.kcolbchain.com/schema/v1",
-  "name": "ERC-721 AI Model Metadata",
-  "properties": {
-    "tokenId": { "type": "uint256" },
-    "modelName": { "type": "string" },
-    "architecture": { "type": "string", "description": "Base model + adapter type" },
-    "trainingData": { "type": "string", "description": "Source/corpus description" },
-    "license": { "type": "string", "enum": ["MIT","Apache-2.0","CC-BY-4.0","Llama-2 Community","Llama-3 Community"] },
-    "performanceMetric": {
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "value": { "type": "number" }
+    const seedModels = [
+      {
+        tokenId: 1,
+        modelName: "SDXL Cyberpunk Portrait LoRA",
+        architecture: "Stable Diffusion XL + LoRA",
+        weightsCID: "bafybeisdxlcyberpunkportrait",
+        baseModel: "SDXL 1.0",
+        license: "Apache-2.0",
+        royaltyBps: 500,
+        pricePerInference: 0.05,
+        inferenceEndpoint: "https://api.example.com/models/sdxl-cyberpunk/infer",
+        attestationStatus: "TEE attested",
+        owner: "0x7a3B...f91E",
+        description: "Image generation LoRA with tokenized weights and per-inference metering.",
+        provenance: [
+          ["2026-05-06", "Minted", "Weights CID and artifact hash anchored in ERC721AI."],
+          ["2026-05-14", "Inference revenue", "312 paid inferences through x402 gate."],
+          ["2026-05-26", "Transferred", "Secondary sale retained ERC-2981 creator royalty metadata."]
+        ]
+      },
+      {
+        tokenId: 2,
+        modelName: "Llama-3 Legal QA Adapter",
+        architecture: "Llama-3 8B + QLoRA",
+        weightsCID: "bafybeillama3legalqaadapter",
+        baseModel: "Meta Llama-3 8B",
+        license: "Llama-3 Community",
+        royaltyBps: 750,
+        pricePerInference: 0.02,
+        inferenceEndpoint: "https://api.example.com/models/legal-qa/infer",
+        attestationStatus: "ZK dataset proof pending",
+        owner: "0xB4c2...a3D7",
+        description: "Legal question-answering fine tune with provenance chain and license metadata.",
+        provenance: [
+          ["2026-05-12", "Minted", "Model ID maps to token #2."],
+          ["2026-05-19", "Endpoint updated", "Owner rotated the hosted inference endpoint."],
+          ["2026-06-01", "Attestation review", "Verifier record queued for the attestation hook."]
+        ]
+      },
+      {
+        tokenId: 3,
+        modelName: "CodeLlama Solidity Auditor",
+        architecture: "CodeLlama 13B + LoRA",
+        weightsCID: "bafybeicodellamasolidityauditor",
+        baseModel: "CodeLlama 13B",
+        license: "MIT",
+        royaltyBps: 600,
+        pricePerInference: 0.035,
+        inferenceEndpoint: "https://api.example.com/models/solidity-auditor/infer",
+        attestationStatus: "Hash verified",
+        owner: "0x91eF...2c44",
+        description: "Solidity review adapter with artifact hash and paid inference accounting.",
+        provenance: [
+          ["2026-05-21", "Minted", "Artifact hash committed with original creator address."],
+          ["2026-05-27", "Metering registered", "USDC inference price configured for x402."],
+          ["2026-06-04", "Revenue withdrawn", "Owner withdrew accumulated model revenue."]
+        ]
       }
-    },
-    "weightsURI": { "type": "string", "format": "uri", "description": "IPFS/Arweave CID" },
-    "x402": {
-      "type": "object",
-      "properties": {
-        "pricePerInference": { "type": "string", "description": "USDC amount" },
-        "paymentAddress": { "type": "address" },
-        "network": { "type": "string", "enum": ["base","optimism","arbitrum"] }
+    ];
+
+    const state = {
+      account: null,
+      chainId: null,
+      selectedTokenId: 1,
+      models: loadModels()
+    };
+
+    const els = {
+      account: document.getElementById("account-pill"),
+      network: document.getElementById("network-pill"),
+      cards: document.getElementById("cards"),
+      search: document.getElementById("search"),
+      detailTitle: document.getElementById("detail-title"),
+      detailSubtitle: document.getElementById("detail-subtitle"),
+      detailToken: document.getElementById("detail-token"),
+      detailKv: document.getElementById("detail-kv"),
+      timeline: document.getElementById("timeline"),
+      metadata: document.getElementById("metadata-preview"),
+      mintStatus: document.getElementById("mint-status"),
+      endpointLink: document.getElementById("endpoint-link"),
+      contractAddress: document.getElementById("contract-address")
+    };
+
+    document.getElementById("connect-wallet").addEventListener("click", connectWallet);
+    document.getElementById("switch-network").addEventListener("click", switchToBaseSepolia);
+    document.getElementById("copy-metadata").addEventListener("click", copyMetadata);
+    document.getElementById("reset-demo").addEventListener("click", resetDemoData);
+    document.getElementById("mint-form").addEventListener("submit", mintModel);
+    document.getElementById("metadata-file").addEventListener("change", importMetadataFile);
+    document.getElementById("load-chain-models").addEventListener("click", loadOnChainModels);
+    document.getElementById("use-demo").addEventListener("click", resetDemoData);
+    els.contractAddress.addEventListener("change", saveContractAddress);
+    els.search.addEventListener("input", render);
+    els.contractAddress.value = localStorage.getItem("erc721-ai-contract-address") || DEFAULT_CONTRACT_ADDRESS;
+
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", accounts => {
+        state.account = accounts && accounts[0] ? accounts[0] : null;
+        render();
+      });
+      window.ethereum.on("chainChanged", chainId => {
+        state.chainId = Number(chainId);
+        render();
+      });
+      hydrateWallet();
+    }
+
+    render();
+
+    function loadModels() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("erc721-ai-marketplace-models") || "null");
+        return Array.isArray(saved) && saved.length ? saved : seedModels;
+      } catch {
+        return seedModels;
       }
-    },
-    "mintedAt": { "type": "uint256", "description": "Block timestamp" },
-    "inferenceCount": { "type": "uint256", "description": "On-chain counter" }
-  }
-}, null, 2));
+    }
 
-function highlight(json) {
-  return json
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"([^"]+)"(\s*:)/g, '<span class="prop">"$1"</span>$2')
-    .replace(/: "([^"]+)"/g, ': <span class="str">"$1"</span>')
-    .replace(/: (\d+)/g, ': <span class="num">$1</span>');
-}
+    function saveModels() {
+      localStorage.setItem("erc721-ai-marketplace-models", JSON.stringify(state.models));
+    }
 
-// ── Metering ──────────────────────────────────────────────
-const meterModel = document.getElementById("meter-model");
-const meterCount = document.getElementById("meter-count");
-const meterTotal = document.getElementById("meter-total");
+    function saveContractAddress() {
+      localStorage.setItem("erc721-ai-contract-address", els.contractAddress.value.trim());
+    }
 
-MODELS.forEach(m => {
-  const opt = document.createElement("option");
-  opt.value = m.id;
-  opt.textContent = `${m.name.split(' -- ')[0]} ($${m.price.toFixed(2)})`;
-  meterModel.appendChild(opt);
-});
+    async function hydrateWallet() {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_accounts", []);
+      const network = await provider.getNetwork();
+      state.account = accounts[0] || null;
+      state.chainId = Number(network.chainId);
+      render();
+    }
 
-function updateCost() {
-  const m = MODELS.find(x => x.id === parseInt(meterModel.value));
-  if (!m) return;
-  const count = Math.max(1, parseInt(meterCount.value) || 1);
-  const total = (m.price * count).toFixed(2);
-  meterTotal.textContent = `$${total}`;
-}
-meterModel.addEventListener("change", updateCost);
-meterCount.addEventListener("input", updateCost);
-updateCost();
+    async function connectWallet() {
+      if (!window.ethereum) {
+        setStatus("Install a browser wallet such as MetaMask to connect.", true);
+        return;
+      }
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const network = await provider.getNetwork();
+      state.account = accounts[0] || null;
+      state.chainId = Number(network.chainId);
+      render();
+    }
 
-// ── Provenance ────────────────────────────────────────────
-const provModel = document.getElementById("prov-model");
-const timeline = document.getElementById("timeline");
+    async function switchToBaseSepolia() {
+      if (!window.ethereum) {
+        setStatus("No injected wallet found.", true);
+        return;
+      }
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: BASE_SEPOLIA.chainIdHex }]
+        });
+      } catch (err) {
+        if (err.code === 4902) {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [BASE_SEPOLIA]
+          });
+        } else {
+          setStatus(err.message || "Could not switch network.", true);
+        }
+      }
+    }
 
-MODELS.forEach(m => {
-  const opt = document.createElement("option");
-  opt.value = m.id;
-  opt.textContent = `#${m.id} ${m.name}`;
-  provModel.appendChild(opt);
-});
+    async function loadOnChainModels() {
+      const address = els.contractAddress.value.trim();
+      if (!isAddress(address)) {
+        setStatus("Enter a valid ERC721AI contract address before loading on-chain models.", true);
+        return;
+      }
+      if (!ethers.JsonRpcProvider || !ethers.Contract) {
+        setStatus("On-chain loading requires ethers.js from the CDN. Check network access and reload.", true);
+        return;
+      }
+      saveContractAddress();
+      setStatus("Loading on-chain model NFTs from Base Sepolia...");
+      try {
+        const provider = state.chainId === BASE_SEPOLIA.chainId && window.ethereum
+          ? new ethers.BrowserProvider(window.ethereum)
+          : new ethers.JsonRpcProvider(BASE_SEPOLIA.rpcUrls[0]);
+        const contract = new ethers.Contract(address, ERC721_AI_ABI, provider);
+        const total = Number(await contract.totalSupply());
+        const loaded = [];
+        for (let tokenId = 1; tokenId <= total; tokenId += 1) {
+          try {
+            const asset = await contract.modelAsset(BigInt(tokenId));
+            const owner = await contract.ownerOf(BigInt(tokenId));
+            loaded.push(modelFromAsset(tokenId, asset, owner));
+          } catch (err) {
+            console.warn("Skipping token", tokenId, err);
+          }
+        }
+        state.models = loaded;
+        state.selectedTokenId = loaded[0]?.tokenId || null;
+        saveModels();
+        render();
+        setStatus(`Loaded ${loaded.length} model NFT${loaded.length === 1 ? "" : "s"} from ${shortAddress(address)}.`);
+      } catch (err) {
+        setStatus(err.shortMessage || err.message || "Could not load on-chain models.", true);
+      }
+    }
 
-function renderProvenance() {
-  const m = MODELS.find(x => x.id === parseInt(provModel.value));
-  if (!m) return;
-  timeline.innerHTML = m.provenance.map(ev => `
-    <div class="tl-event ${ev.type}">
-      <div class="tl-date">${ev.date}</div>
-      <div class="tl-title">${ev.title}</div>
-      <div class="tl-detail">${ev.detail}</div>
-    </div>
-  `).join("");
-}
-provModel.addEventListener("change", renderProvenance);
-renderProvenance();
-</script>
+    async function mintModel(event) {
+      event.preventDefault();
+      const model = modelFromForm();
 
+      const contractAddress = els.contractAddress.value.trim();
+      if (contractAddress && isAddress(contractAddress) && state.account && state.chainId === BASE_SEPOLIA.chainId && window.ethereum) {
+        try {
+          setStatus("Submitting mint transaction on Base Sepolia...");
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          const contract = new ethers.Contract(contractAddress, ERC721_AI_ABI, signer);
+          const tx = await contract.mintModel(
+            state.account,
+            ethers.id(model.modelName),
+            ethers.id(model.weightsCID),
+            ethers.ZeroHash,
+            model.weightsCID,
+            model.architecture,
+            model.license,
+            model.inferenceEndpoint,
+            model.royaltyBps
+          );
+          const receipt = await tx.wait();
+          const minted = receipt.logs.map(log => {
+            try { return contract.interface.parseLog(log); } catch { return null; }
+          }).find(log => log && log.name === "ModelMinted");
+          if (minted) model.tokenId = Number(minted.args.tokenId);
+          model.owner = shortAddress(state.account);
+          model.provenance.unshift([new Date().toISOString().slice(0, 10), "Minted on Base Sepolia", tx.hash]);
+          saveContractAddress();
+          setStatus("Mint confirmed: " + tx.hash);
+        } catch (err) {
+          setStatus(err.shortMessage || err.message || "Mint failed.", true);
+          return;
+        }
+      } else {
+        model.owner = state.account ? shortAddress(state.account) : "local preview";
+        setStatus("Local preview model added. Enter a contract address and connect Base Sepolia to submit real mints.");
+      }
+
+      state.models = [model, ...state.models.filter(item => item.tokenId !== model.tokenId)];
+      state.selectedTokenId = model.tokenId;
+      saveModels();
+      render();
+    }
+
+    function modelFromForm() {
+      const nextId = Math.max(0, ...state.models.map(m => Number(m.tokenId) || 0)) + 1;
+      const price = Number(document.getElementById("price").value || "0");
+      const modelName = document.getElementById("model-name").value.trim();
+      const weightsCID = document.getElementById("weights-cid").value.trim();
+      return {
+        tokenId: nextId,
+        modelName,
+        architecture: document.getElementById("architecture").value.trim(),
+        weightsCID,
+        baseModel: document.getElementById("architecture").value.trim().split("+")[0].trim(),
+        license: document.getElementById("license").value.trim(),
+        royaltyBps: Number(document.getElementById("royalty").value || "0"),
+        pricePerInference: price,
+        inferenceEndpoint: document.getElementById("endpoint").value.trim(),
+        attestationStatus: "Not registered",
+        owner: "local preview",
+        description: document.getElementById("description").value.trim(),
+        provenance: [
+          [new Date().toISOString().slice(0, 10), "Metadata prepared", "Artifact hash: " + ethers.id(weightsCID)],
+          [new Date().toISOString().slice(0, 10), "x402 price selected", price.toFixed(6) + " USDC per inference"]
+        ]
+      };
+    }
+
+    function modelFromAsset(tokenId, asset, owner) {
+      const modelId = asset.modelId || asset[0];
+      const artifactHash = asset.artifactHash || asset[1];
+      const baseModel = asset.baseModel || asset[2];
+      const weightsCID = asset.weightsCID || asset[3];
+      const architecture = asset.architecture || asset[4];
+      const license = asset.license || asset[5];
+      const inferenceEndpoint = asset.inferenceEndpoint || asset[6];
+      const royaltyBps = Number(asset.creatorRoyaltyBps || asset[7] || 0);
+      const createdAt = Number(asset.createdAt || asset[8] || 0);
+      const creator = asset.creator || asset[9];
+      return {
+        tokenId,
+        modelName: architecture || `Model #${tokenId}`,
+        architecture,
+        weightsCID,
+        baseModel: baseModel === ethers.ZeroHash ? "Root model" : baseModel,
+        license,
+        royaltyBps,
+        pricePerInference: 0,
+        inferenceEndpoint,
+        attestationStatus: "On-chain asset",
+        owner: shortAddress(owner),
+        description: `ERC721AI token #${tokenId} minted by ${shortAddress(creator)}.`,
+        provenance: [
+          [createdAt ? new Date(createdAt * 1000).toISOString().slice(0, 10) : "on-chain", "Minted", `Model ID ${shortHash(modelId)}`],
+          ["on-chain", "Artifact", `Hash ${shortHash(artifactHash)}`],
+          ["on-chain", "Endpoint", inferenceEndpoint || "No inference endpoint set"]
+        ]
+      };
+    }
+
+    async function importMetadataFile(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        const metadata = JSON.parse(await file.text());
+        setInputValue("model-name", metadata.name || metadata.modelName);
+        setInputValue("architecture", metadata.architecture || metadata.baseModel);
+        setInputValue("weights-cid", metadata.weightsCID || metadata.weightsUri || metadata.weightsURI);
+        setInputValue("license", metadata.license);
+        setInputValue("royalty", metadata.creatorRoyaltyBps || metadata.royaltyBps);
+        setInputValue("price", metadata.x402?.pricePerInferenceUSDC || metadata.pricePerInference);
+        setInputValue("endpoint", metadata.inferenceEndpoint);
+        setInputValue("description", metadata.description);
+        setStatus("Metadata imported from " + file.name + ".");
+      } catch (err) {
+        setStatus("Could not import metadata JSON: " + (err.message || "invalid file"), true);
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    function setInputValue(id, value) {
+      if (value === undefined || value === null || value === "") return;
+      document.getElementById(id).value = String(value);
+    }
+
+    function render() {
+      renderWallet();
+      renderCards();
+      renderDetail();
+    }
+
+    function renderWallet() {
+      els.account.textContent = state.account ? shortAddress(state.account) : "No wallet";
+      els.account.className = "pill" + (state.account ? " good" : "");
+      if (state.chainId === BASE_SEPOLIA.chainId) {
+        els.network.textContent = "Base Sepolia";
+        els.network.className = "pill good";
+      } else {
+        els.network.textContent = "Base Sepolia not connected";
+        els.network.className = "pill warn";
+      }
+    }
+
+    function renderCards() {
+      const q = els.search.value.trim().toLowerCase();
+      const models = state.models.filter(m => {
+        const haystack = [m.modelName, m.architecture, m.license, m.weightsCID, m.inferenceEndpoint, m.attestationStatus].join(" ").toLowerCase();
+        return !q || haystack.includes(q);
+      });
+      els.cards.innerHTML = models.map(model => `
+        <article class="card ${model.tokenId === state.selectedTokenId ? "active" : ""}" data-token="${model.tokenId}">
+          <div class="card-title">${escapeHtml(model.modelName)}</div>
+          <div class="muted small">${escapeHtml(model.architecture)}</div>
+          <div class="row small"><span class="muted">Token</span><span class="mono">#${model.tokenId}</span></div>
+          <div class="row small"><span class="muted">Price</span><span class="mono">${model.pricePerInference} USDC</span></div>
+          <div class="row small"><span class="muted">Owner</span><span class="mono">${escapeHtml(model.owner)}</span></div>
+          <div class="tags">
+            <span class="tag ok">${escapeHtml(model.license)}</span>
+            <span class="tag info">${escapeHtml(model.attestationStatus)}</span>
+          </div>
+          <div class="muted small mono">${escapeHtml(model.weightsCID)}</div>
+        </article>
+      `).join("");
+      els.cards.querySelectorAll(".card").forEach(card => {
+        card.addEventListener("click", () => {
+          state.selectedTokenId = Number(card.dataset.token);
+          render();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const model = selectedModel();
+      if (!model) return;
+      els.detailTitle.textContent = model.modelName;
+      els.detailSubtitle.textContent = model.description;
+      els.detailToken.textContent = "Token #" + model.tokenId;
+      els.endpointLink.href = model.inferenceEndpoint;
+      const metadata = makeMetadata(model);
+      els.detailKv.innerHTML = [
+        ["Weights CID", model.weightsCID],
+        ["Base model", model.baseModel],
+        ["License", model.license],
+        ["Royalty", model.royaltyBps + " bps"],
+        ["x402 price", model.pricePerInference + " USDC"],
+        ["Inference endpoint", model.inferenceEndpoint],
+        ["Attestation", model.attestationStatus],
+        ["Owner", model.owner]
+      ].map(([k, v]) => `<div class="k">${k}</div><div class="v">${escapeHtml(String(v))}</div>`).join("");
+      els.timeline.innerHTML = model.provenance.map(([date, title, body]) => `
+        <div class="event">
+          <span class="muted small mono">${escapeHtml(date)}</span>
+          <strong>${escapeHtml(title)}</strong>
+          <span class="muted small">${escapeHtml(body)}</span>
+        </div>
+      `).join("");
+      els.metadata.textContent = JSON.stringify(metadata, null, 2);
+    }
+
+    function selectedModel() {
+      return state.models.find(m => m.tokenId === state.selectedTokenId) || state.models[0];
+    }
+
+    function makeMetadata(model) {
+      return {
+        name: model.modelName,
+        description: model.description,
+        tokenId: model.tokenId,
+        standard: "ERC-721 AI",
+        network: "Base Sepolia",
+        weightsCID: model.weightsCID,
+        artifactHash: ethers.id(model.weightsCID),
+        baseModel: model.baseModel,
+        architecture: model.architecture,
+        license: model.license,
+        creatorRoyaltyBps: model.royaltyBps,
+        inferenceEndpoint: model.inferenceEndpoint,
+        attestationStatus: model.attestationStatus,
+        x402: {
+          pricePerInferenceUSDC: model.pricePerInference,
+          paymentNetwork: "Base Sepolia"
+        },
+        provenance: model.provenance.map(([date, title, body]) => ({ date, title, body }))
+      };
+    }
+
+    async function copyMetadata() {
+      const metadata = JSON.stringify(makeMetadata(selectedModel()), null, 2);
+      await navigator.clipboard.writeText(metadata);
+      setStatus("Metadata copied to clipboard.");
+    }
+
+    function resetDemoData() {
+      state.models = seedModels;
+      state.selectedTokenId = 1;
+      saveModels();
+      render();
+      setStatus("Demo data reset.");
+    }
+
+    function setStatus(message, isError = false) {
+      els.mintStatus.textContent = message;
+      els.mintStatus.className = "notice" + (isError ? " error" : "");
+    }
+
+    function shortAddress(address) {
+      return address ? address.slice(0, 6) + "..." + address.slice(-4) : "";
+    }
+
+    function shortHash(hash) {
+      return hash ? hash.slice(0, 10) + "..." + hash.slice(-6) : "";
+    }
+
+    function isAddress(value) {
+      return typeof ethers.isAddress === "function"
+        ? ethers.isAddress(value)
+        : /^0x[a-fA-F0-9]{40}$/.test(value);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
 </body>
 </html>

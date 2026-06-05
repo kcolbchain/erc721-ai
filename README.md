@@ -82,6 +82,14 @@ Design and integration details are documented in `docs/attestation-hook.md`.
 
 A viem-based TypeScript SDK for the standard lives in [`sdk/typescript/`](./sdk/typescript/) — it wraps `ERC721AI`, `ERC721AIx402Metering`, and `ERC721AIAttestationHook` behind three modules (`model`, `metering`, `attestation`) so consumers can mint a tokenized model, set an inference price, pay per call, and withdraw revenue in roughly five lines of code. See [`sdk/typescript/README.md`](./sdk/typescript/README.md) for the quickstart.
 
+## Marketplace dApp
+
+The static marketplace demo lives in [`web/`](./web/). It lets users connect a
+wallet, switch to Base Sepolia, browse model NFTs, inspect provenance and
+attestation metadata, and mint through the existing `ERC721AI.mintModel` surface
+when a Base Sepolia contract address is configured. See
+[`web/README.md`](./web/README.md) for Vercel and Netlify deployment steps.
+
 ## Links
 
 - **Docs:** https://docs.kcolbchain.com/erc721-ai/
