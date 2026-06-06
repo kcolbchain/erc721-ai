@@ -1,5 +1,7 @@
 # erc721-ai
 
+[![CI](https://github.com/kcolbchain/erc721-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/kcolbchain/erc721-ai/actions/workflows/ci.yml)
+
 > Token standard for tokenized fine-tuned AI model weights — ownership, provenance, and tradability
 
 **kcolbchain** — open-source blockchain tools and research since 2015.
