@@ -53,6 +53,31 @@ npm test
 npm run build
 ```
 
+On Windows PowerShell, use `npm.cmd` if script execution policy blocks the
+`npm.ps1` shim:
+
+```powershell
+cd sdk\typescript
+npm.cmd install
+npm.cmd test
+npm.cmd run build
+```
+
+### Verification Notes
+
+The TypeScript SDK quickstart was verified on Windows PowerShell with Node
+v24.16.0 and npm v11.13.0:
+
+- `cd sdk\typescript`
+- `npm.cmd install`
+- `npm.cmd test` (24 tests passed)
+- `npm.cmd run build`
+
+The Solidity commands above require Foundry's `forge` to be installed and
+available on `PATH`. On Windows, Foundry's installer should be run from Git Bash
+or WSL; after `forge --version` succeeds, run `forge install`, `forge build`,
+and `forge test` from the repository root.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get started. Issues tagged `good-first-issue` are great entry points.
