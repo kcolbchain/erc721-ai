@@ -3,7 +3,7 @@ eip: <TBD — request from EIP editors>
 title: Tokenized AI Model Weights (ERC-721 AI)
 description: A token standard for representing ownership, provenance, and tradability of AI model weights, extending ERC-721.
 author: Abhishek Krishna (@abhicris), Pattermesh (@Pattermesh), kcolbchain (@kcolbchain)
-discussions-to: https://ethereum-magicians.org/<TBD>
+discussions-to: https://github.com/kcolbchain/erc721-ai/issues/22
 status: Draft
 type: Standards Track
 category: ERC
