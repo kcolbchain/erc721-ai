@@ -103,7 +103,7 @@ This repo also includes a pluggable contract-level attestation hook for verifiab
 - `contracts/mocks/MockTrainingAttestationVerifier.sol`
 - `contracts/ERC721AIAttestationHook.sol`
 
-Design and integration details are documented in `docs/attestation-hook.md`.
+Design and integration details are documented in `[docs/attestation-hook.md](docs/attestation-hook.md).
 
 ## TypeScript SDK
 
