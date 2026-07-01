@@ -9,3 +9,8 @@ __pycache__/
 .env
 .venv/
 venv/
+
+# Foundry deps are installed in CI via `forge install --no-git`; keep local install artifacts out of git
+lib/
+foundry.lock
+.gitmodules
